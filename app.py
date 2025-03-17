@@ -308,7 +308,7 @@ def get_courses():
 def login():
     data = request.get_json()
 
-    # Vulnerability: Direct string concatenation in SQL query
+    # Vulnerability: Direct string concatenation in SQL query (SQL Injection)
     query = f"SELECT * FROM user WHERE username='{data['username']}' AND password='{data['password']}'"
 
     # Using SQLAlchemy instead of direct SQLite
@@ -392,7 +392,7 @@ def export_grades():
     course_id = request.json.get('course_id')
     format_type = request.json.get('format', 'csv')
 
-    # Vulnerability: Command injection through format parameter
+    # Vulnerability: Command injection through format parameter (Command Injection)
     os.system(f'generate_report {course_id} --format {format_type}')
 
     return jsonify({'message': 'Export completed'})
@@ -475,105 +475,4 @@ def get_student_course_grades(course_id, student_id):
         } for grade in grades])
 
     except jwt.InvalidTokenError:
-        return jsonify({'message': 'Invalid token'}), 401
-
-# Update the grade submission endpoint
-
-
-@app.route('/api/grade/student', methods=['POST'])
-def grade_student():
-    token = request.headers.get('Authorization', '').split('Bearer ')[-1]
-    data = request.get_json()
-
-    try:
-        payload = jwt.decode(
-            token, app.config['SECRET_KEY'], algorithms=['HS256'])
-        user = User.query.filter_by(id=payload['user_id']).first()
-
-        if not user or user.role != 'teacher':
-            return jsonify({'message': 'Unauthorized'}), 403
-
-        # Check if teacher owns this course
-        if not is_course_teacher(data['course_id'], user.id):
-            return jsonify({'message': 'Unauthorized to grade in this course'}), 403
-
-        # First check if student is enrolled in this course
-        enrollment = Enrollment.query.filter_by(
-            student_id=data['student_id'],
-            course_id=data['course_id']
-        ).first()
-
-        if not enrollment:
-            return jsonify({'message': 'Student is not enrolled in this course'}), 400
-
-        # Create submission for this specific course
-        submission = Submission(
-            student_id=data['student_id'],
-            course_id=data['course_id'],
-            grade=data['grade']
-        )
-        db.session.add(submission)
-        db.session.flush()  # Get submission ID
-
-        # Create grade record
-        grade = Grade(
-            submission_id=submission.id,
-            course_id=data['course_id'],
-            value=data['grade'],
-            feedback=data['feedback']
-        )
-        db.session.add(grade)
-        db.session.commit()
-
-        return jsonify({'message': 'Grade submitted successfully'})
-
-    except Exception as e:
-        db.session.rollback()
-        print(f"Error submitting grade: {str(e)}")
-        return jsonify({'message': 'Error submitting grade'}), 500
-
-
-if __name__ == '__main__':
-    if not os.path.exists(app.config['UPLOAD_FOLDER']):
-        os.makedirs(app.config['UPLOAD_FOLDER'])
-
-    with app.app_context():
-        db.create_all()
-
-        # Create default teacher only if they don't exist
-        default_teacher = User.query.filter_by(username='john.smith').first()
-        if not default_teacher:
-            default_teacher = User(
-                username='john.smith',
-                password='teacher123',  # In production, this should be hashed
-                role='teacher'
-            )
-            db.session.add(default_teacher)
-            db.session.commit()
-            print("Default teacher created - username: john.smith, password: teacher123")
-
-            # Only create sample courses if the teacher was just created
-            sample_courses = [
-                Course(
-                    title='Web Security Basics',
-                    description='Learn about XSS, CSRF, and SQL Injection',
-                    teacher_id=default_teacher.id
-                ),
-                Course(
-                    title='Network Security',
-                    description='Understanding network protocols and security measures',
-                    teacher_id=default_teacher.id
-                ),
-                Course(
-                    title='Machine Learning & AI',
-                    description='Understanding Supervised and unsupervised learning. ',
-                    teacher_id=default_teacher.id
-                )
-            ]
-            for course in sample_courses:
-                db.session.add(course)
-
-            db.session.commit()
-            print("Sample courses created and assigned to John Smith")
-
-    app.run(debug=True, host='0.0.0.0', port=4000)
+        return
