@@ -10,32 +10,37 @@ on:
 
 jobs:
   backend-ci:
-    runs-on: ubuntu-latest  # Choose the operating system for the CI runner (Ubuntu in this case)
+    runs-on: ubuntu-latest  # Using Ubuntu as the runner
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2  # Check out your code from the repository
+      uses: actions/checkout@v2
 
     - name: Set up Python
-      uses: actions/setup-python@v2  # Set up Python environment
+      uses: actions/setup-python@v2
       with:
-        python-version: '3.9'  # Choose the Python version you are using for the project
+        python-version: '3.9'
 
     - name: Install dependencies
       run: |
-        python -m venv venv  # Create a virtual environment
-        source venv/bin/activate  # Activate the virtual environment
-        pip install --upgrade pip  # Upgrade pip
-        pip install -r requirements.txt  # Install dependencies from the requirements.txt file
+        python -m venv venv
+        source venv/bin/activate
+        pip install --upgrade pip
+        pip install -r requirements.txt
 
     - name: Run tests
       run: |
-        source venv/bin/activate  # Ensure the virtual environment is activated
-        pytest  # Run the tests using pytest
+        source venv/bin/activate
+        pytest
 
     - name: Run SonarQube analysis
-      uses: sonarsource/sonarcloud-action@v2  # Use the SonarCloud action to analyze the code
+      uses: sonarsource/sonarcloud-action@v1  # Change to commit SHA if still failing
       with:
-        organization: 'your-organization'  # Replace with your SonarCloud organization name
+        organization: 'your-organization'  # Replace with your SonarCloud organization
         projectKey: 'flask-backend-repo'  # Replace with your SonarCloud project key
-        token: ${{ secrets.SONAR_TOKEN }}  # Ensure SONAR_TOKEN is added to GitHub Secrets
+        token: ${{ secrets.SONAR_TOKEN }}
+
+    - name: Run Snyk test
+      run: |
+        source venv/bin/activate
+        snyk test --all-projects
