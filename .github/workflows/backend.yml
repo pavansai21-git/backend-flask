@@ -1,38 +1,41 @@
-name: Backend CI/CD
+name: Flask Backend CI/CD
 
 on:
   push:
     branches:
-      - main  # Trigger the workflow on every push to the 'main' branch
+      - main  # Trigger on push to the 'main' branch
   pull_request:
     branches:
-      - main  # Also trigger the workflow when a PR is created or updated against the 'main' branch
+      - main  # Trigger on PR to 'main' branch
 
 jobs:
   backend-ci:
-    runs-on: ubuntu-latest  # Define the virtual machine where the job will run (Ubuntu in this case)
+    runs-on: ubuntu-latest  # Choose the operating system for the CI runner (Ubuntu in this case)
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2  # This step checks out your code from GitHub
+      uses: actions/checkout@v2  # Check out your code from the repository
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v2  # This step installs Node.js, specify the version below
+    - name: Set up Python
+      uses: actions/setup-python@v2  # Set up Python environment
       with:
-        node-version: '14'  # Use Node.js version 14 (adjust as needed)
+        python-version: '3.9'  # Choose the Python version you are using for the project
 
     - name: Install dependencies
-      run: npm install  # Run 'npm install' to install dependencies in the backend
+      run: |
+        python -m venv venv  # Create a virtual environment
+        source venv/bin/activate  # Activate the virtual environment
+        pip install --upgrade pip  # Upgrade pip
+        pip install -r requirements.txt  # Install dependencies from the requirements.txt file
 
     - name: Run tests
-      run: npm test  # Run tests to ensure the backend is working as expected
+      run: |
+        source venv/bin/activate  # Ensure the virtual environment is activated
+        pytest  # Run the tests using pytest
 
     - name: Run SonarQube analysis
-      uses: sonarsource/sonarcloud-action@v2  # This is the SonarCloud action
+      uses: sonarsource/sonarcloud-action@v2  # Use the SonarCloud action to analyze the code
       with:
-        organization: 'your-organization'  # Your SonarCloud organization (replace with your actual organization)
-        projectKey: 'backend-repo'  # Your unique SonarCloud project key for the backend repository
-        token: ${{ secrets.SONAR_TOKEN }}  # GitHub Secrets used for SonarCloud authentication (you’ll need to set up this token in GitHub Secrets)
-
-    - name: Run SNYK test
-      run: snyk test --all-projects  # This runs the Snyk test on your backend project to check for vulnerabilities
+        organization: 'your-organization'  # Replace with your SonarCloud organization name
+        projectKey: 'flask-backend-repo'  # Replace with your SonarCloud project key
+        token: ${{ secrets.SONAR_TOKEN }}  # Ensure SONAR_TOKEN is added to GitHub Secrets
