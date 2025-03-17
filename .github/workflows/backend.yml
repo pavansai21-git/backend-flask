@@ -28,7 +28,7 @@ jobs:
       run: npm test  # Run tests to ensure the backend is working as expected
 
     - name: Run SonarQube analysis
-      uses: sonarsource/sonarcloud-action@v1  # This is the SonarCloud action
+      uses: sonarsource/sonarcloud-action@v2  # This is the SonarCloud action
       with:
         organization: 'your-organization'  # Your SonarCloud organization (replace with your actual organization)
         projectKey: 'backend-repo'  # Your unique SonarCloud project key for the backend repository
