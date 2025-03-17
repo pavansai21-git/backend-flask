@@ -302,6 +302,8 @@ def get_courses():
 
     except jwt.InvalidTokenError:
         return jsonify({'message': 'Invalid token'}), 401
+
+
 @app.route('/api/login', methods=['POST'])
 def login():
     data = request.get_json()
@@ -325,24 +327,22 @@ def login():
         return jsonify({'token': token})
 
     return jsonify({'message': 'Invalid credentials'}), 401
+# Vulnerability: No proper authentication check
 
 
-@app.route('/api/student-submissions/<int:student_id>', methods=['GET'])
-def get_student_submissions(student_id):
-    # Vulnerability: IDOR possible - no authentication check
-    submissions = Submission.query.filter_by(student_id=student_id).all()
+@app.route('/api/submissions/<int:submission_id>', methods=['GET'])
+def get_submission(submission_id):
+    # Vulnerability: No authorization check
+    submission = Submission.query.get(submission_id)
+    if not submission:
+        return jsonify({'message': 'Submission not found'}), 404
 
-    return jsonify([{
-        'id': sub.id,
-        'file_path': sub.file_path,
-        'submitted_at': sub.submitted_at.isoformat() if hasattr(sub, 'submitted_at') else None,
-        'grade': {
-            'value': sub.grade.value,
-            'feedback': sub.grade.feedback
-        } if sub.grade else None
-    } for sub in submissions])
-
-
+    return jsonify({
+        'id': submission.id,
+        'student_id': submission.student_id,
+        'grade': submission.grade,
+        'feedback': submission.feedback
+    })
 
 # Vulnerability: Insecure file handling
 
