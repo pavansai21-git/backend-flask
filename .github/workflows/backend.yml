@@ -1,0 +1,38 @@
+name: Backend CI/CD
+
+on:
+  push:
+    branches:
+      - main  # Trigger the workflow on every push to the 'main' branch
+  pull_request:
+    branches:
+      - main  # Also trigger the workflow when a PR is created or updated against the 'main' branch
+
+jobs:
+  backend-ci:
+    runs-on: ubuntu-latest  # Define the virtual machine where the job will run (Ubuntu in this case)
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2  # This step checks out your code from GitHub
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v2  # This step installs Node.js, specify the version below
+      with:
+        node-version: '14'  # Use Node.js version 14 (adjust as needed)
+
+    - name: Install dependencies
+      run: npm install  # Run 'npm install' to install dependencies in the backend
+
+    - name: Run tests
+      run: npm test  # Run tests to ensure the backend is working as expected
+
+    - name: Run SonarQube analysis
+      uses: sonarsource/sonarcloud-action@v1  # This is the SonarCloud action
+      with:
+        organization: 'your-organization'  # Your SonarCloud organization (replace with your actual organization)
+        projectKey: 'backend-repo'  # Your unique SonarCloud project key for the backend repository
+        token: ${{ secrets.SONAR_TOKEN }}  # GitHub Secrets used for SonarCloud authentication (you’ll need to set up this token in GitHub Secrets)
+
+    - name: Run SNYK test
+      run: snyk test --all-projects  # This runs the Snyk test on your backend project to check for vulnerabilities
