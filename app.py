@@ -311,12 +311,8 @@ def login():
     # Vulnerability: Direct string concatenation in SQL query
     query = f"SELECT * FROM user WHERE username='{data['username']}' AND password='{data['password']}'"
 
-    # Using SQLAlchemy instead of direct SQLite
-    user = User.query.filter_by(
-        username=data['username'],
-        # Vulnerability: plain text password comparison
-        password=data['password']
-    ).first()
+    # Use raw SQL (vulnerable) instead of SQLAlchemy's query method
+    user = db.session.execute(query).fetchone()
 
     if user:
         token = jwt.encode({
